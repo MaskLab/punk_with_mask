@@ -10,6 +10,6 @@ We hope the outbreak will end soon and the punk will be safe!
 
 # How to Generate mask punks.
 ./punks_with_mask/mask.py --input="punks.png" --output="mask_punks.png" -chain="TRON" 
-
+![punks_with_mask](/punks.png)
 
 
