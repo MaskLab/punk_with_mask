@@ -12,4 +12,6 @@ We hope the outbreak will end soon and the punk will be safe!
 ./punks_with_mask/mask.py --input="punks.png" --output="mask_punks.png" -chain="TRON" 
 ![punks_with_mask](/punks.png)
 
+This is the official and genuine image of all of the PunksWithMask that have been created. openssl sha256 punks.png and compare that to the embedded hash in the contract 683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3
+
 
