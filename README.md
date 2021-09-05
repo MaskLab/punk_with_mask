@@ -8,6 +8,14 @@ Currently these punks are already active in Ethereum, TRON, BSC and other virtua
 
 We hope the outbreak will end soon and the punk will be safe!
 
+# How many kinds of mask
+
+1. random color mask，Most punk are wearing random color masks
+2. white color mask， According to the generation algorithm, only very few punk will have white masks
+3. mask with valves, According to the generation algorithm,  Punk with special characteristics, will wear a mask with a breathing valve
+4. mask with specail logo,  red T for TRON, blue pixel diamond for Ethereum and yellow simplified bnb logo for BSC.
+5. combined 1,2,3,4
+
 # Algorithm for generating mask
 We generated unique masks for each punk, and the generation steps are as follows.
 1. By image analysis, we extract the pixel features of each punk.
