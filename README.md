@@ -9,16 +9,23 @@ Currently these punks are already active in Ethereum, TRON, BSC and other virtua
 We hope the outbreak will end soon and the punk will be safe!
 
 # How to Generate mask punks.
-./punks_with_mask/mask.py --input="punks.png" --output="mask_punks.png" -chain="TRON" 
+```
+./punks_with_mask/mask.py --input="punks.png" --output="mask_punks.png" -chain="TRON"
+```
 ![punks_with_mask](/tron_punks.png)
 
-This is the official and genuine image of all of the PunksWithMask that have been created on TRON. openssl sha256 punks.png and compare that to the embedded hash in the contract 683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3
+```
+SHA256(tron_punks.png)= 683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3
+```
+This is the official and genuine image of all of the PunksWithMask that have been created on TRON. openssl sha256 tron_punks.png 
+To allow verification that the punks being managed by the CryptoPunks Ethereum contract are the same as what you see in the image, we have embedded a SHA256 hash of the image file into the contract. You can generate this hash for the punks image file via a command line similar to openssl sha -sha256 punks.png and compare that to the embedded hash in the contract 683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3.
+
 
 ![punks_with_mask](/eth_punks.png)
-This is the official and genuine image of all of the PunksWithMask that have been created on Ethereum. openssl sha256 eth_punks.png and compare that to the embedded hash in the contract 7bb356d6e3769beca1f8819789c1b393a77d9d36c2f1a479f438620b0265a39c
-
+```
+SHA256(eth_punks.png)= 7bb356d6e3769beca1f8819789c1b393a77d9d36c2f1a479f438620b0265a39c
+```
 ![punks_with_mask](/bsc_punks.png)
-
-This is the official and genuine image of all of the PunksWithMask that have been created on BSC. openssl sha256 bsc_punks.png and compare that to the embedded hash in the contract d0ed09abe30cfbf269d107907ff810c95f03c8c351dc681f46bb0d30f4a37db8
-
-
+```
+SHA256(bsc_punks.png)= d0ed09abe30cfbf269d107907ff810c95f03c8c351dc681f46bb0d30f4a37db8
+```
