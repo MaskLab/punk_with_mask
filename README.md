@@ -23,8 +23,6 @@ We generated unique masks for each punk, and the generation steps are as follows
 3. Extract specific bytes from the random number as the color of the unique mask of the punk.
 4. make different types of masks according to the features of the punk.
 
-Translated with www.DeepL.com/Translator (free version)
-
 ```
 ./punks_with_mask/mask.py --input="punks.png" --output="mask_punks.png" -chain="TRON"
 ```
