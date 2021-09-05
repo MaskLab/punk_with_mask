@@ -10,7 +10,7 @@ We hope the outbreak will end soon and the punk will be safe!
 
 # How to Generate mask punks.
 ./punks_with_mask/mask.py --input="punks.png" --output="mask_punks.png" -chain="TRON" 
-![punks_with_mask](/punks.png)
+![punks_with_mask](/tron_punks.png)
 
 This is the official and genuine image of all of the PunksWithMask that have been created on TRON. openssl sha256 punks.png and compare that to the embedded hash in the contract 683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3
 
@@ -19,6 +19,6 @@ This is the official and genuine image of all of the PunksWithMask that have bee
 
 ![punks_with_mask](/bsc_punks.png)
 
-This is the official and genuine image of all of the PunksWithMask that have been created on Ethereum. openssl sha256 bsc_punks.png and compare that to the embedded hash in the contract d0ed09abe30cfbf269d107907ff810c95f03c8c351dc681f46bb0d30f4a37db8
+This is the official and genuine image of all of the PunksWithMask that have been created on BSC. openssl sha256 bsc_punks.png and compare that to the embedded hash in the contract d0ed09abe30cfbf269d107907ff810c95f03c8c351dc681f46bb0d30f4a37db8
 
 
