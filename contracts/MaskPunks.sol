@@ -351,18 +351,17 @@ contract ITRC721Receiver {
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
 contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, ReentrancyGuard {
-//    using SafeMath for uint256;
-//    using EnumerableSet for EnumerableSet.UintSet;
-//    using EnumerableMap for EnumerableMap.UintToAddressMap;
 
     // Public variables
 
     // This is the provenance record of all artwork in existence
-    // openssl dgst -sha256 punks.png
-    string public constant PROVENANCE = "683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3";
+    // shasum -a256 tron_punks.png
+    string public constant PUNKS_PROVENANCE = "683c9ab5430e9cf98450d50590178777c42e5fea54d70cf2f47e4a0bf47eb1f3";
+    // shasum -a256 justins.png
+    string public constant JUSTIN_PROVENANCE = "b91518027fcb4e74a4ad96262514e2142fb55df01aa0f4877e80cd98c3cd421c";
 
     uint256 public constant MAX_NFT_SUPPLY = 10000;
-    uint256 public constant MAX_SPECIAL_SUPPLY = 10;
+    uint256 public constant MAX_SPECIAL_SUPPLY = 11;
     // uint256 public startingIndexBlock;
 
     // uint256 public startingIndex;
@@ -371,26 +370,17 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     // which can be also obtained as `IERC721Receiver(0).onERC721Received.selector`
     bytes4 private constant _TRC721_RECEIVED = 0x5175f878;
 
-    // Mapping from holder address to their (enumerable) set of owned tokens
-//    mapping (address => EnumerableSet.UintSet) private _holderTokens;
 
-    // Enumerable mapping from token ids to their owners
-//    EnumerableMap.UintToAddressMap private _tokenOwners;
-
-    // TODO: begin of add -----
     event CFOUpdated(address indexed previousCFO, address indexed newCFO);
     event Recovered(address indexed cfo, address indexed token, uint256 indexed amount);
 
-    // TODO: UPDATE THIS
     address public constant APENFT_ADDRESS = address(0x3Dfe637B2b9aE4190A458B5F3EfC1969afE27819);
-    uint256 private constant MULTIPLY_SPECIAL_PRICE = 100;
-    uint256 private constant MULTIPLY_TRX_2_NFT_PRICE = 15000;
+    uint256 public multiplySpecialPrice = 100;
+    uint256 public multiplyTrx2NFT = 20000;
 
     address payable public _cfo;
     // price in TRX for normal mint one token
     uint256 private _trxPrice = 1000_000000;
-//    // price in NFT for normal mint one token
-//    uint256 public nftPrice = 1000_000000 * MULTIPLY_TRX_2_NFT_PRICE;
 
     uint256[] private _special_punks;
     // |--240 bits for Special tokens --|-- 16 bits for normal tokens --|
@@ -407,7 +397,6 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     mapping(uint256 => IndexOwner) private _owners;
     // Mapping owner address to token count
     mapping(address => uint256) private _balances;
-    // TODO: end of add -----
     // Mapping from token ID to approved address
     mapping (uint256 => address) private _tokenApprovals;
 
@@ -430,13 +419,10 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
 
     uint256 private punks_index_exists_length = 10;
 
-    uint256 private punks_per_column = 1000;
-
-    uint256 private nonce = 0;
+    uint256 private constant PUNKS_PER_COLUMN = 1000;
 
     // initialize
     bool private start_sale = false;
-
 
     /*
      *     bytes4(keccak256('balanceOf(address)')) == 0x70a08231
@@ -477,8 +463,8 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     constructor (string memory name, string memory symbol) public {
         _name = name;
         _symbol = symbol;
-        for(uint i = 1; i <= MAX_SPECIAL_SUPPLY; ++i){
-            _special_punks.push(i + 100000);
+        for(uint i = 0; i < MAX_SPECIAL_SUPPLY; ++i){
+            _special_punks.push(i + 10000);
         }
     }
 
@@ -541,7 +527,7 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256) {
         uint256 balance = _balances[owner];
         require(index < balance, "index out of range");
-        uint256 tokenId = _userIndexTokens[uint64(index) << 160 + uint160(owner)];
+        uint256 tokenId = _userIndexTokens[(index << 160) + uint160(owner)];
         return tokenId;
     }
 
@@ -559,8 +545,6 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     function tokenByIndex(uint256 index) public view returns (uint256) {
         require(index < _tokenIdxs.length, "TRC721: operator query for nonexistent token");
         return _tokenIdxs[index];
-//        (uint256 tokenId, ) = _tokenOwners.at(index);
-//        return tokenId;
     }
 
     /**
@@ -662,7 +646,6 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
      */
     function _exists(uint256 tokenId) internal view returns (bool) {
         return _owners[tokenId].owner != address(0);
-//        return _tokenOwners.contains(tokenId);
     }
 
     /**
@@ -690,7 +673,7 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
      */
     function _safeMint(address to, uint256 tokenId) internal {
 
-        (uint256 _special, uint256 _normal) = _detailSupply();
+        (uint256 _special, uint256 _normal) = detailSupply();
 
         if (tokenId < MAX_NFT_SUPPLY){
             require(_normal < MAX_NFT_SUPPLY);
@@ -735,15 +718,12 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
 
         // |-- index in user's token list --|-- uint160(user address) --| => tokenId
         uint256 _balance = _balances[to];
-        _userIndexTokens[_balance << 160 + uint160(to)] = tokenId;
+        _userIndexTokens[(_balance << 160) + uint160(to)] = tokenId;
         _balances[to] = _balance + 1;
         _owners[tokenId] = IndexOwner({ idx: uint64(_balance), owner: to });
 
         // because no burn function. so no need to record the global index of index
         _tokenIdxs.push(tokenId);
-//        _holderTokens[to].add(tokenId);
-
-//        _tokenOwners.set(tokenId, to);
 
         emit Transfer(address(0), to, tokenId);
     }
@@ -777,22 +757,18 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
         // not the last one
         if (_idx < _balance){
             // the last index;
-            uint256 _key = _balance << 160 + uint160(from);
+            uint256 _key = (_balance << 160) + uint160(from);
             _tmp = _userIndexTokens[_key];
             // |-- index in user's token list --|-- uint160(user address) --| => tokenId
-            _userIndexTokens[_idx << 160 + uint160(from)] = _tmp;
+            _userIndexTokens[(_idx << 160) + uint160(from)] = _tmp;
         }
         // this balance is the length of _userIndexTokens[index << 160 + uint160(from)], so _balance - 1 is array.pop()
         _balances[from] = _balance;
 
         _balance = _balances[to];
-        _userIndexTokens[_balance << 160 + uint160(to)] = tokenId;
+        _userIndexTokens[(_balance << 160) + uint160(to)] = tokenId;
         _balances[to] = _balance + 1;
         _owners[tokenId] = IndexOwner({ idx: uint64(_balance), owner: to });
-//        _holderTokens[from].remove(tokenId);
-//        _holderTokens[to].add(tokenId);
-//
-//        _tokenOwners.set(tokenId, to);
 
         emit Transfer(from, to, tokenId);
     }
@@ -820,9 +796,9 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     function _checkOnTRC721Received(address from, address to, uint256 tokenId, bytes memory _data)
     internal returns (bool)
     {
-        if (!to.isContract) {
-            return true;
-        }
+         if (!to.isContract) {
+             return true;
+         }
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = to.call(abi.encodeWithSelector(
                 ITRC721Receiver(to).onTRC721Received.selector,
@@ -863,10 +839,72 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal { }
 
     // special functions goes from here
+    function setTokenURI(string memory _baseURI) onlyOwner public {
+        baseURI = _baseURI;
+    }
 
-    function _detailSupply() internal view returns (uint256, uint256) {
+    function setCFO(address CFO) onlyOwner public {
+        emit CFOUpdated(_cfo, CFO);
+        _cfo = address(uint160(CFO));
+    }
+
+    function setMultiply(uint256 trx2NFT, uint256 specialPunk) onlyOwner public {
+        if (trx2NFT > 0){
+            multiplyTrx2NFT = trx2NFT;
+        }
+        if (specialPunk > 0){
+            multiplySpecialPrice = specialPunk;
+        }
+    }
+
+    function detailSupply() public view returns (uint256, uint256) {
         uint256 total = _totalSupply;
         return ((total >> 16), (total & uint16(-1)));
+    }
+
+    function initializeOwners(address[] memory users, uint256 _column) onlyOwner public {
+        require(!start_sale, 'You can not do it when sale is start');
+
+        for(uint256 i = 0; i < users.length; i++){
+            uint256 idx = punks_index[_column];
+            if(idx >= PUNKS_PER_COLUMN - 1){
+                // cannot used all of this column
+                break;
+            }
+            idx = idx + ((_column * PUNKS_PER_COLUMN));
+
+            _safeMint(users[i], idx);
+            punks_index[_column] = idx + 1;
+        }
+    }
+
+    function finishInitializeOwners() onlyOwner public {
+        start_sale = true;
+    }
+
+    /**
+     * @dev Converts a `uint256` to its ASCII `string` decimal representation.
+     */
+    function toString(uint256 value) internal pure returns (string memory) {
+        // Inspired by OraclizeAPI's implementation - MIT licence
+        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
+
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 
     /**
@@ -896,60 +934,15 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
         require(page_size > 0 && page_size <= 1000, "index out of range");
         uint256 balance = _balances[owner];
         total = balance;
-        require(start_index < balance, "index out of range");
+        if((balance > 0 || start_index > 0) && start_index < balance){
+            // [start_index, end_index), end_index is not included
+            balance = (balance <= (start_index + page_size) ? balance : (start_index + page_size));
 
-        // [start_index, end_index), end_index is not included
-        balance = (balance <= (start_index + page_size) ? balance : (start_index + page_size));
-
-        tokenIds = new uint256[](balance - start_index);
-        for(uint i = start_index; i < balance; ++i){
-            tokenIds[i - start_index] = _userIndexTokens[uint64(i) << 160 + uint160(owner)];
+            tokenIds = new uint256[](balance - start_index);
+            for(uint i = start_index; i < balance; ++i){
+                tokenIds[i - start_index] = _userIndexTokens[(i << 160) + uint160(owner)];
+            }
         }
-    }
-
-    function setTokenURI(string memory _baseURI) onlyOwner public {
-        baseURI = _baseURI;
-    }
-
-    function setCFO(address CFO) onlyOwner public {
-        emit CFOUpdated(_cfo, CFO);
-        _cfo = address(uint160(CFO));
-    }
-
-    // Added to support recovering TRX to be distributed to holders
-    function recoverTRX(uint256 value) external {
-        require(_cfo != address(0), "cfo is empty");
-        //require(owner == msg.sender || _cfo == msg.sender, "Ownable: caller is not the owner");
-        _cfo.transfer(value);
-        emit Recovered(_cfo, address(0), value);
-    }
-
-    // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
-    function recoverERC20(address token, uint256 value) external {
-        require(_cfo != address(0), "cfo is empty");
-        //require(owner == msg.sender || _cfo == msg.sender, "Ownable: caller is not the owner");
-        require(token != address(this));
-        // 0xa9059cbb2ab09eb219583f4a59a5d0623ade346d962bcd4e46b11da047c9049b == keccak256(bytes('transfer(address,uint256)'))
-        // 0xa9059cbb = bytes4(keccak256(bytes('transfer(address,uint256)')));
-        token.call(abi.encodeWithSelector(0xa9059cbb, _cfo, value));
-        emit Recovered(_cfo, token, value);
-    }
-
-    function initializeOwners(address[] memory users, uint256 _column) onlyOwner public {
-        require(!start_sale, 'You can not do it when sale is start');
-
-        for(uint256 i = 0; i < users.length; i++){
-
-            uint256 p_index = ((punks_index[_column]) + ((_column * punks_per_column)));
-
-            _safeMint(users[i], p_index);
-
-            punks_index[_column]++;
-        }
-    }
-
-    function finishInitilizeOwners() onlyOwner public {
-        start_sale = true;
     }
 
     /**
@@ -963,15 +956,14 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
      * @dev Gets current MaskPunk Price
      */
     function getNormalNFTPrice() public view returns (uint256) {
-        return _trxPrice * MULTIPLY_TRX_2_NFT_PRICE;
+        return _trxPrice * multiplyTrx2NFT;
     }
-
 
     /**
      * @dev Gets current MaskPunk Price
      */
     function getSpecialTrxPrice() public view returns (uint256) {
-        return _trxPrice * MULTIPLY_SPECIAL_PRICE;
+        return _trxPrice * multiplySpecialPrice;
     }
 
     /**
@@ -980,30 +972,18 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     function mintNormal(uint256 number) nonReentrant public payable {
         require(start_sale, 'sale is not start');
         require(number > 0 && number <= 20, "You may not buy more than 20 NFTs at once");
-        (uint256 _special, uint256 _normal) = _detailSupply();
+        (uint256 _special, uint256 _normal) = detailSupply();
         require(_normal + number <= MAX_NFT_SUPPLY, "Exceeds MAX_NFT_SUPPLY");
 
         uint256 msgValue = msg.value;
         if (msgValue > 0){
-//            uint256 price = trxPrice;
             uint256 _fee = _trxPrice * number;
-//            price = price * 110 / 100;
-//            if (price <= 50_000_000000){
-//                trxPrice = price;
-//            }
-            require(_fee <= msg.value, "Trx value sent is not correct");
-            if (_fee > msg.value){
-                address(uint160(owner())).transfer(msg.value - _fee);
+            require(_fee <= msgValue, "Trx value sent is not correct");
+            if (_fee < msgValue){
+                address(uint160(msg.sender)).transfer(msgValue - _fee);
             }
-//            (bool success, ) = address(uint160(owner())).call.value(_fee)("");
-//            require(success, "Address: unable to send value, recipient may have reverted");
         }else{
-//            uint256 price = nftPrice;
-            uint256 _fee = _trxPrice * MULTIPLY_TRX_2_NFT_PRICE * number;
-//            price = price * 1001 / 100;
-//            if (price <= 50_000_000000 * MULTIPLY_TRX_2_NFT_PRICE){
-//                nftPrice = price;
-//            }
+            uint256 _fee = _trxPrice * multiplyTrx2NFT * number;
             // 0x23b872dd7302113369cda2901243429419bec145408fa8b352b3dd92b66c680b = keccak256(bytes('transferFrom(address,address,uint256)'))
             // 0x23b872dd = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
             (bool success, bytes memory data) = address(APENFT_ADDRESS).call(abi.encodeWithSelector(0x23b872dd, msg.sender, address(this), _fee));
@@ -1020,7 +1000,6 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
         }
 
         _totalSupply = (_special << 16) + _normal + number;
-
     }
 
     /**
@@ -1028,19 +1007,16 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
     */
     function mintSpecial() nonReentrant public payable returns (bool){
         require(start_sale, 'sale is not start');
-        (uint256 _special, uint256 _normal) = _detailSupply();
+        (uint256 _special, uint256 _normal) = detailSupply();
         require(_special < MAX_SPECIAL_SUPPLY, "Exceeds MAX_SPECIAL_SUPPLY");
-        require(_normal >= MAX_NFT_SUPPLY * 80 / 100, "still not ready to mint special");
+        require(_normal >= MAX_NFT_SUPPLY * 800 / 1000, "still not ready to mint special");
         uint256 _random = uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), block.timestamp)));
-//        if (_random % 5 <= 2){
-//            address(uint160(owner())).transfer(msg.value * 950 / 1000);
-//            return false;
-//        }
 
-        uint256 _fee = _trxPrice * MULTIPLY_SPECIAL_PRICE;
-        require(_fee <= msg.value, "Trx value sent is not correct");
-        if (_fee > msg.value){
-            address(uint160(owner())).transfer(msg.value - _fee);
+        uint256 _fee = _trxPrice * multiplySpecialPrice;
+        uint256 msgValue = msg.value;
+        require(_fee <= msgValue, "Trx value sent is not correct");
+        if (_fee < msgValue){
+            address(uint160(msg.sender)).transfer(msgValue - _fee);
         }
 
         uint len = _special_punks.length;
@@ -1050,65 +1026,53 @@ contract MaskPunks is Ownable, TRC165, ITRC721Enumerable, IERC721Metadata, Reent
         len--;
         if (n != len){
             _special_punks[n] = _special_punks[len];
-            _special_punks.pop();
         }
+        _special_punks.pop();
 
         _totalSupply = ((_special + 1) << 16) + _normal;
 
-//        (bool success, ) = address(uint160(owner())).call.value(_fee)("");
-//        require(success, "Address: unable to send value, recipient may have reverted");
         return true;
     }
-
 
     function getNextPunkIndex() private returns(uint256) {
 
         uint256 n = 0;
         if (punks_index_exists_length > 1){
-            nonce++;
-            n = uint256(keccak256(abi.encodePacked(now + nonce))) % punks_index_exists_length;
+            n = uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), block.timestamp))) % punks_index_exists_length;
         }
         uint256 row_num = punks_index_exists[n];
         uint256 idx_in_row = punks_index[row_num];
 
-        require(punks_index_exists_length >= 1 && idx_in_row < punks_per_column, "all item used!");
+        require(punks_index_exists_length >= 1 && idx_in_row < PUNKS_PER_COLUMN, "all item used!");
         idx_in_row++;
         punks_index[row_num] = idx_in_row;
 
-        if (idx_in_row >= punks_per_column){
+        if (idx_in_row >= PUNKS_PER_COLUMN){
             uint tail = punks_index_exists_length - 1;
             punks_index_exists_length = tail;
             if (n < tail){
-//                int temp = punks_index_exists[n];
                 punks_index_exists[n] = punks_index_exists[tail];
-//                punks_index_exists[tail] = temp;
             }
         }
-        return (row_num * punks_per_column + idx_in_row - 1);
+        return (row_num * PUNKS_PER_COLUMN + idx_in_row - 1);
     }
 
-    /**
-     * @dev Converts a `uint256` to its ASCII `string` decimal representation.
-     */
-    function toString(uint256 value) internal pure returns (string memory) {
-        // Inspired by OraclizeAPI's implementation - MIT licence
-        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
-
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
+    // Added to support recovering TRX to be distributed to holders
+    function recoverTRX(uint256 value) external {
+        require(_cfo != address(0), "cfo is empty");
+        //require(owner == msg.sender || _cfo == msg.sender, "Ownable: caller is not the owner");
+        _cfo.transfer(value);
+        emit Recovered(_cfo, address(0), value);
     }
+
+    // Added to support recovering LP Rewards from other systems such as BAL to be distributed to holders
+    function recoverTRC20(address token, uint256 value) external {
+        require(_cfo != address(0), "cfo is empty");
+        require(token != address(this));
+        // 0xa9059cbb2ab09eb219583f4a59a5d0623ade346d962bcd4e46b11da047c9049b == keccak256(bytes('transfer(address,uint256)'))
+        // 0xa9059cbb = bytes4(keccak256(bytes('transfer(address,uint256)')));
+        token.call(abi.encodeWithSelector(0xa9059cbb, _cfo, value));
+        emit Recovered(_cfo, token, value);
+    }
+
 }
